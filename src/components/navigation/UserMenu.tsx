@@ -1,13 +1,21 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User, LogOut } from 'lucide-react';
+import { authService } from '../../services/auth';
 
 export function UserMenu() {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.href = '/landing';
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      navigate('/landing');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // If the API call fails, still clear local storage and redirect
+      localStorage.removeItem('token');
+      navigate('/landing');
+    }
   };
 
   return (
