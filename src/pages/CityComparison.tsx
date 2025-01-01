@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ArrowLeftRight, ArrowRight } from 'lucide-react';
 import { CitySelector } from '../components/shared/CitySelector';
 import { NumberInput } from '../components/shared/NumberInput';

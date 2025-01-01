@@ -1,32 +1,28 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { authService } from '../../services/auth';
 
 interface AuthRouteProps {
   children: React.ReactNode;
 }
 
 export function AuthRoute({ children }: AuthRouteProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(authService.isAuthenticated());
+  const location = useLocation();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
-
     const handleStorageChange = () => {
-      setIsAuthenticated(!!localStorage.getItem('token'));
+      setIsAuthenticated(authService.isAuthenticated());
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Show nothing while checking authentication
-  if (isAuthenticated === null) {
-    return null;
-  }
-
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    // Redirect to the page they were trying to visit, or dashboard
+    const from = location.state?.from?.pathname || '/';
+    return <Navigate to={from} replace />;
   }
 
   return <>{children}</>;

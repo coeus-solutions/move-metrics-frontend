@@ -11,13 +11,16 @@ import { SignupPage } from './pages/SignupPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { AuthRoute } from './components/auth/AuthRoute';
 import { useState, useEffect } from 'react';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import { authService } from './services/auth';
 
 export default function App() {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
 
   useEffect(() => {
     const handleStorageChange = () => {
-      setToken(localStorage.getItem('token'));
+      setIsAuthenticated(authService.isAuthenticated());
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -25,43 +28,50 @@ export default function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/landing" element={
-          token ? <Navigate to="/" replace /> : <Landing />
-        } />
-        
-        {/* Auth routes - redirect to dashboard if logged in */}
-        <Route path="/login" element={
-          <AuthRoute>
-            <LoginPage />
-          </AuthRoute>
-        } />
-        <Route path="/signup" element={
-          <AuthRoute>
-            <SignupPage />
-          </AuthRoute>
-        } />
+    <Provider store={store}>
+      <BrowserRouter>
+        <Routes>
+          {/* Landing page - accessible when not authenticated */}
+          <Route path="/landing" element={
+            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />
+          } />
+          
+          {/* Auth routes - redirect to dashboard if logged in */}
+          <Route path="/login" element={
+            <AuthRoute>
+              <LoginPage />
+            </AuthRoute>
+          } />
+          <Route path="/signup" element={
+            <AuthRoute>
+              <SignupPage />
+            </AuthRoute>
+          } />
 
-        {/* Protected routes - require authentication */}
-        <Route path="/" element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Dashboard />} />
-          <Route path="cities" element={<Cities />} />
-          <Route path="city/:cityName" element={<CityAnalysis />} />
-          <Route path="compare" element={<CityComparison />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
+          {/* Protected routes - require authentication */}
+          <Route element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/cities" element={<Cities />} />
+            <Route path="/city/:cityName" element={<CityAnalysis />} />
+            <Route path="/compare" element={<CityComparison />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
 
-        {/* Redirect unmatched routes */}
-        <Route path="*" element={
-          token ? <Navigate to="/" replace /> : <Navigate to="/landing" replace />
-        } />
-      </Routes>
-    </BrowserRouter>
+          {/* Root redirect */}
+          <Route path="/" element={
+            <Navigate to={isAuthenticated ? "/dashboard" : "/landing"} replace />
+          } />
+
+          {/* Catch all route */}
+          <Route path="*" element={
+            <Navigate to={isAuthenticated ? "/dashboard" : "/landing"} replace />
+          } />
+        </Routes>
+      </BrowserRouter>
+    </Provider>
   );
 }

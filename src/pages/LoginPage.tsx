@@ -17,10 +17,12 @@ export function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
-    const from = (location.state as LocationState)?.from?.pathname || '/';
+    const from = (location.state as LocationState)?.from?.pathname || '/dashboard';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
+        
         try {
             const response = await authService.login(email, password);
             login(response.access_token);
