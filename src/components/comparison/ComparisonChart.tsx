@@ -1,9 +1,10 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import type { City } from '../../types';
+import type { CostAnalysis } from '../../services/costAnalysis';
 
 interface ComparisonChartProps {
-  cities: [City, City];
+  cityNames: [string, string];
+  analyses: [CostAnalysis, CostAnalysis];
 }
 
 const COLORS = {
@@ -13,17 +14,18 @@ const COLORS = {
   text: '#374151'
 };
 
-export function ComparisonChart({ cities }: ComparisonChartProps) {
-  const [city1, city2] = cities;
+export function ComparisonChart({ cityNames, analyses }: ComparisonChartProps) {
+  const [city1Name, city2Name] = cityNames;
+  const [city1Data, city2Data] = analyses;
   
-  if (!city1?.details || !city2?.details) {
+  if (!city1Data?.monthly_costs || !city2Data?.monthly_costs) {
     return null;
   }
 
-  const data = Object.entries(city1.details).map(([category, value]) => ({
+  const data = Object.entries(city1Data.monthly_costs).map(([category, value]) => ({
     category: category.charAt(0).toUpperCase() + category.slice(1),
-    [city1.name]: value,
-    [city2.name]: city2.details[category as keyof typeof city2.details],
+    [city1Name]: value,
+    [city2Name]: city2Data.monthly_costs[category as keyof typeof city2Data.monthly_costs],
   }));
 
   return (
@@ -52,12 +54,12 @@ export function ComparisonChart({ cities }: ComparisonChartProps) {
           />
           <Legend />
           <Bar
-            dataKey={city1.name}
+            dataKey={city1Name}
             fill={COLORS.primary}
             radius={[4, 4, 0, 0]}
           />
           <Bar
-            dataKey={city2.name}
+            dataKey={city2Name}
             fill={COLORS.secondary}
             radius={[4, 4, 0, 0]}
           />

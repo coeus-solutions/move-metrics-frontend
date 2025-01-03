@@ -1,22 +1,48 @@
 import React from 'react';
 import { Shield, Heart, GraduationCap } from 'lucide-react';
-import type { City } from '../../types';
+import type { CostAnalysis } from '../../services/costAnalysis';
 
 interface QualityComparisonProps {
-  cities: [City, City];
+  cityNames: [string, string];
+  analyses: [CostAnalysis, CostAnalysis];
 }
 
-export function QualityComparison({ cities }: QualityComparisonProps) {
-  const [city1, city2] = cities;
+export function QualityComparison({ cityNames, analyses }: QualityComparisonProps) {
+  const [city1Name, city2Name] = cityNames;
+  const [city1Data, city2Data] = analyses;
   
-  if (!city1?.details || !city2?.details) {
+  if (!city1Data?.cost_ratings || !city2Data?.cost_ratings) {
     return null;
   }
 
+  const getRatingScore = (rating: 'expensive' | 'moderate' | 'affordable'): number => {
+    switch (rating) {
+      case 'affordable': return 85;
+      case 'moderate': return 65;
+      case 'expensive': return 45;
+      default: return 50;
+    }
+  };
+
   const indicators = [
-    { name: 'Safety', icon: Shield, value1: 85, value2: 80 },
-    { name: 'Healthcare', icon: Heart, value1: city1.details.healthcare, value2: city2.details.healthcare },
-    { name: 'Education', icon: GraduationCap, value1: city1.details.education, value2: city2.details.education }
+    {
+      name: 'Overall Cost',
+      icon: Shield,
+      value1: getRatingScore(city1Data.cost_ratings.overall),
+      value2: getRatingScore(city2Data.cost_ratings.overall)
+    },
+    {
+      name: 'Housing',
+      icon: Heart,
+      value1: getRatingScore(city1Data.cost_ratings.housing),
+      value2: getRatingScore(city2Data.cost_ratings.housing)
+    },
+    {
+      name: 'Daily Life',
+      icon: GraduationCap,
+      value1: getRatingScore(city1Data.cost_ratings.daily_life),
+      value2: getRatingScore(city2Data.cost_ratings.daily_life)
+    }
   ];
 
   return (
@@ -38,7 +64,7 @@ export function QualityComparison({ cities }: QualityComparisonProps) {
                 />
               </div>
               <div className="mt-1 flex justify-between text-xs text-gray-500">
-                <span>{city1.name}</span>
+                <span>{city1Name}</span>
                 <span>{value1}/100</span>
               </div>
             </div>
@@ -50,7 +76,7 @@ export function QualityComparison({ cities }: QualityComparisonProps) {
                 />
               </div>
               <div className="mt-1 flex justify-between text-xs text-gray-500">
-                <span>{city2.name}</span>
+                <span>{city2Name}</span>
                 <span>{value2}/100</span>
               </div>
             </div>

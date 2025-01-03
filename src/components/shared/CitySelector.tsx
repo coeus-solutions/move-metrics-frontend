@@ -9,6 +9,7 @@ import {
   searchCities,
   type City 
 } from '../../store/slices/citiesSlice';
+import { AppDispatch } from '../../store';
 
 interface CitySelectorProps {
   label: string;
@@ -18,7 +19,7 @@ interface CitySelectorProps {
 }
 
 export function CitySelector({ label, value, onChange, placeholder }: CitySelectorProps) {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const allCities = useSelector(selectAllCities);
   const isLoading = useSelector(selectCitiesLoading);
   
@@ -45,14 +46,14 @@ export function CitySelector({ label, value, onChange, placeholder }: CitySelect
   }, [allCities, searchTerm, page]);
 
   const debouncedSearch = useCallback(
-    debounce((term: string) => {
+    debounce(() => {
       setPage(1);
     }, 300),
     []
   );
 
   useEffect(() => {
-    debouncedSearch(searchTerm);
+    debouncedSearch();
     return () => {
       debouncedSearch.cancel();
     };

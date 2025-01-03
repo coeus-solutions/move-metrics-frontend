@@ -56,7 +56,7 @@ export default function App() {
           }>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/cities" element={<Cities />} />
-            <Route path="/city/:cityName" element={<CityAnalysis />} />
+            <Route path="/analysis/:cityName" element={<CityAnalysis />} />
             <Route path="/compare" element={<CityComparison />} />
             <Route path="/profile" element={<Profile />} />
           </Route>

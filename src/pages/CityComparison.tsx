@@ -1,43 +1,48 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeftRight, ArrowRight } from 'lucide-react';
 import { CitySelector } from '../components/shared/CitySelector';
 import { NumberInput } from '../components/shared/NumberInput';
 import { ComparisonResults } from '../components/comparison/ComparisonResults';
-import { mockCities } from '../data/mockData';
-import type { City } from '../types';
+import { costAnalysisService } from '../services/costAnalysis';
+import type { ComprehensiveComparison } from '../services/costAnalysis';
 
 export function CityComparison() {
+  const navigate = useNavigate();
   const [sourceCity, setSourceCity] = useState('');
   const [targetCity, setTargetCity] = useState('');
   const [familySize, setFamilySize] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<Record<string, City> | null>(null);
+  const [results, setResults] = useState<ComprehensiveComparison | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleCompare = () => {
+  const handleCompare = async () => {
     if (!sourceCity || !targetCity) return;
-    setLoading(true);
     
-    setTimeout(() => {
-      const sourceCityData = mockCities[sourceCity as keyof typeof mockCities];
-      const targetCityData = mockCities[targetCity as keyof typeof mockCities];
-      
-      const adjustCosts = (city: City): City => {
-        const multiplier = Math.log(familySize + 1) / Math.log(2);
-        return {
-          ...city,
-          details: Object.entries(city.details).reduce((acc, [key, value]) => ({
-            ...acc,
-            [key]: Number((value * multiplier).toFixed(2))
-          }), {} as typeof city.details)
-        };
-      };
-
-      setResults({
-        [sourceCity]: adjustCosts(sourceCityData),
-        [targetCity]: adjustCosts(targetCityData)
-      });
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const comparisonResults = await costAnalysisService.compareComprehensive(
+        sourceCity,
+        targetCity,
+        familySize
+      );
+      setResults(comparisonResults);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to compare cities');
+      setResults(null);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
+  };
+
+  const handleCitySelect = (city: string, isSource: boolean) => {
+    if (isSource) {
+      setSourceCity(city);
+    } else {
+      setTargetCity(city);
+    }
   };
 
   return (
@@ -53,7 +58,7 @@ export function CityComparison() {
             <CitySelector
               label="Source City"
               value={sourceCity}
-              onChange={setSourceCity}
+              onChange={(city) => handleCitySelect(city, true)}
               placeholder="Select source city"
             />
           </div>
@@ -68,7 +73,7 @@ export function CityComparison() {
             <CitySelector
               label="Target City"
               value={targetCity}
-              onChange={setTargetCity}
+              onChange={(city) => handleCitySelect(city, false)}
               placeholder="Select target city"
             />
           </div>
@@ -96,6 +101,12 @@ export function CityComparison() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          {error}
+        </div>
+      )}
 
       {results && <ComparisonResults results={results} />}
     </div>

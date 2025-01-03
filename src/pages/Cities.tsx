@@ -1,19 +1,43 @@
-import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Building2 } from 'lucide-react';
-import { SearchBar } from '../components/cities/SearchBar';
+import { useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Building2, Calculator, Loader2 } from 'lucide-react';
+import { CitySelector } from '../components/shared/CitySelector';
 import { mockCities } from '../data/mockData';
+import { costAnalysisService } from '../services/costAnalysis';
 
 export function Cities() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+  const [selectedCity, setSelectedCity] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const filteredCities = useMemo(() => {
-    const query = searchQuery.toLowerCase();
-    return Object.entries(mockCities).filter(([cityName, city]) => 
-      cityName.toLowerCase().includes(query) || 
-      city.country.toLowerCase().includes(query)
+    if (!selectedCity) return Object.entries(mockCities);
+    return Object.entries(mockCities).filter(([cityName]) => 
+      cityName.toLowerCase() === selectedCity.toLowerCase()
     );
-  }, [searchQuery]);
+  }, [selectedCity]);
+
+  const handleComputeCost = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!selectedCity) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      await costAnalysisService.getCostAnalysis(selectedCity);
+      navigate(`/analysis/${selectedCity}`);
+    } catch (error: any) {
+      console.error('Failed to compute cost analysis:', error);
+      if (error.message === 'Authentication required') {
+        navigate('/login', { state: { from: `/cities` } });
+      } else {
+        setError(error.response?.data?.detail || 'Failed to compute cost analysis. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -23,11 +47,42 @@ export function Cities() {
       </header>
 
       <div className="bg-white rounded-lg shadow-sm p-4">
-        <SearchBar 
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder="Search by city or country..."
+        <CitySelector 
+          label="Search Cities"
+          value={selectedCity}
+          onChange={setSelectedCity}
+          placeholder="Search for a city..."
         />
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
+          {error}
+        </div>
+      )}
+
+      <div className="flex justify-center">
+        <Link
+          to={selectedCity ? `/analysis/${selectedCity}` : '#'}
+          onClick={handleComputeCost}
+          className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white 
+            ${selectedCity && !isLoading
+              ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500' 
+              : 'bg-gray-400 cursor-not-allowed'} 
+            focus:outline-none`}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              Computing...
+            </>
+          ) : (
+            <>
+              <Calculator className="h-5 w-5 mr-2" />
+              Compute Living Cost
+            </>
+          )}
+        </Link>
       </div>
 
       {filteredCities.length === 0 ? (
@@ -43,7 +98,7 @@ export function Cities() {
           {filteredCities.map(([cityName, city]) => (
             <Link
               key={cityName}
-              to={`/city/${cityName}`}
+              to={`/analysis/${cityName}`}
               className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between">

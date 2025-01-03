@@ -1,4 +1,16 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import axios from 'axios';
+
+const API_URL = 'http://127.0.0.1:8000';
+const TOKEN_KEY = 'auth_token';
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+};
 
 export interface City {
   id: string;
@@ -51,11 +63,14 @@ export const fetchCities = createAsyncThunk(
       return null;
     }
 
-    const response = await fetch('http://localhost:8000/cities');
-    if (!response.ok) {
+    const response = await axios.get(`${API_URL}/cities`, {
+      headers: getAuthHeaders(),
+    });
+    
+    if (!response.data) {
       throw new Error('Failed to fetch cities');
     }
-    return await response.json();
+    return response.data;
   },
   {
     condition: (_, { getState }) => {
@@ -93,6 +108,8 @@ const citiesSlice = createSlice({
 export const selectAllCities = (state: { cities: CitiesState }) => state.cities.items;
 export const selectCitiesLoading = (state: { cities: CitiesState }) => state.cities.loading;
 export const selectCitiesError = (state: { cities: CitiesState }) => state.cities.error;
+export const selectCityByName = (state: { cities: CitiesState }, cityName: string) => 
+  state.cities.items.find(city => city.city.toLowerCase() === cityName.toLowerCase());
 
 // Search cities utility function
 export const searchCities = (cities: City[], searchTerm: string, page: number = 1, pageSize: number = 20) => {
