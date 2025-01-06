@@ -1,136 +1,89 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-const API_URL = 'http://127.0.0.1:8000';
-const TOKEN_KEY = 'auth_token';
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem(TOKEN_KEY);
-  return {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-};
+import { RootState } from '../index';
 
 export interface City {
   id: string;
   city: string;
   country: string;
-  population: number;
-  timezone: string;
-  cost_index: number;
-  housing_cost: number;
-  groceries_cost: number;
-  utilities_cost: number;
-  transportation_cost: number;
-  healthcare_cost: number;
-  education_cost: number;
-  quality_of_life_score: number;
-  family_friendliness_score: number;
-  job_market_score: number;
-  safety_score: number;
-  healthcare_quality: number;
-  education_quality: number;
-  environmental_quality: number;
-  economy_score: number;
-  leisure_score: number;
 }
 
 interface CitiesState {
-  items: City[];
+  cities: City[];
   loading: boolean;
-  error: string | null;
-  lastFetched: number | null;
 }
 
 const initialState: CitiesState = {
-  items: [],
+  cities: [],
   loading: false,
-  error: null,
-  lastFetched: null,
 };
 
-// Fetch cities with 5 minute cache
 export const fetchCities = createAsyncThunk(
   'cities/fetchCities',
-  async (_, { getState }) => {
-    const state = getState() as { cities: CitiesState };
-    const now = Date.now();
-    const fiveMinutes = 5 * 60 * 1000;
-
-    // Return cached data if it's less than 5 minutes old
-    if (state.cities.lastFetched && now - state.cities.lastFetched < fiveMinutes) {
-      return null;
-    }
-
-    const response = await axios.get(`${API_URL}/cities`, {
-      headers: getAuthHeaders(),
+  async () => {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch('http://localhost:8000/cities', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
-    
-    if (!response.data) {
+    if (!response.ok) {
       throw new Error('Failed to fetch cities');
     }
-    return response.data;
-  },
-  {
-    condition: (_, { getState }) => {
-      const { cities } = getState() as { cities: CitiesState };
-      return !cities.loading;
-    },
+    const data = await response.json();
+    return data;
   }
 );
 
 const citiesSlice = createSlice({
   name: 'cities',
   initialState,
-  reducers: {},
+  reducers: {
+    setCities: (state, action: PayloadAction<City[]>) => {
+      state.cities = action.payload;
+    },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCities.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
-      .addCase(fetchCities.fulfilled, (state, action: PayloadAction<City[] | null>) => {
+      .addCase(fetchCities.fulfilled, (state, action) => {
+        state.cities = action.payload;
         state.loading = false;
-        if (action.payload) {
-          state.items = action.payload;
-          state.lastFetched = Date.now();
-        }
       })
-      .addCase(fetchCities.rejected, (state, action) => {
+      .addCase(fetchCities.rejected, (state) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to fetch cities';
+        state.cities = [];
       });
   },
 });
 
-// Selectors
-export const selectAllCities = (state: { cities: CitiesState }) => state.cities.items;
-export const selectCitiesLoading = (state: { cities: CitiesState }) => state.cities.loading;
-export const selectCitiesError = (state: { cities: CitiesState }) => state.cities.error;
-export const selectCityByName = (state: { cities: CitiesState }, cityName: string) => 
-  state.cities.items.find(city => city.city.toLowerCase() === cityName.toLowerCase());
+export const { setCities, setLoading } = citiesSlice.actions;
 
-// Search cities utility function
-export const searchCities = (cities: City[], searchTerm: string, page: number = 1, pageSize: number = 20) => {
-  const lowercaseSearch = searchTerm.toLowerCase().trim();
-  
-  const filteredCities = lowercaseSearch
-    ? cities.filter(
-        city =>
-          city.city.toLowerCase().includes(lowercaseSearch) ||
-          city.country.toLowerCase().includes(lowercaseSearch)
-      )
-    : cities;
+export const selectAllCities = (state: RootState) => state.cities.cities;
+export const selectCitiesLoading = (state: RootState) => state.cities.loading;
 
-  const startIndex = (page - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedCities = filteredCities.slice(startIndex, endIndex);
+export const searchCities = (cities: City[] | null | undefined, searchTerm: string, page: number) => {
+  if (!Array.isArray(cities)) {
+    return {
+      cities: [],
+      hasMore: false
+    };
+  }
 
+  const filtered = cities.filter(city => 
+    city.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    city.country.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const pageSize = 20;
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
   return {
-    cities: paginatedCities,
-    total: filteredCities.length,
-    hasMore: endIndex < filteredCities.length
+    cities: filtered.slice(start, end),
+    hasMore: end < filtered.length
   };
 };
 

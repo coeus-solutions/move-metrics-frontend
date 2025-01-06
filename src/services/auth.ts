@@ -1,12 +1,12 @@
 import axios from 'axios';
-
-const API_URL = 'http://127.0.0.1:8000';
+import { API_BASE_URL } from '../config/api';
 
 const TOKEN_KEY = 'auth_token';
 
 export interface SignupData {
     email: string;
     password: string;
+    name: string;
 }
 
 export interface LoginResponse {
@@ -41,7 +41,7 @@ const getAuthHeaders = () => {
 
 export const authService = {
     async signup(data: SignupData): Promise<{ message: string }> {
-        const response = await axios.post(`${API_URL}/auth/signup`, data, {
+        const response = await axios.post(`${API_BASE_URL}/auth/signup`, data, {
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -59,7 +59,7 @@ export const authService = {
         formData.append('client_id', '');    // Required by OAuth2 spec
         formData.append('client_secret', ''); // Required by OAuth2 spec
 
-        const response = await axios.post(`${API_URL}/auth/login`, formData, {
+        const response = await axios.post(`${API_BASE_URL}/auth/login`, formData, {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'accept': 'application/json'
@@ -73,7 +73,7 @@ export const authService = {
 
     async logout(): Promise<void> {
         try {
-            await axios.post(`${API_URL}/auth/logout`, {}, {
+            await axios.post(`${API_BASE_URL}/auth/logout`, {}, {
                 headers: getAuthHeaders(),
             });
         } catch (error) {
@@ -84,14 +84,14 @@ export const authService = {
     },
 
     async getProfile(): Promise<ProfileData> {
-        const response = await axios.get(`${API_URL}/auth/profile`, {
+        const response = await axios.get(`${API_BASE_URL}/auth/profile`, {
             headers: getAuthHeaders(),
         });
         return response.data;
     },
 
     async updateProfile(data: Partial<ProfileData>): Promise<ProfileData> {
-        const response = await axios.put(`${API_URL}/auth/profile`, data, {
+        const response = await axios.put(`${API_BASE_URL}/auth/profile`, data, {
             headers: getAuthHeaders(),
         });
         return response.data;
@@ -99,7 +99,7 @@ export const authService = {
 
     async changePassword(newPassword: string): Promise<{ message: string }> {
         const response = await axios.put(
-            `${API_URL}/profile/change-password`,
+            `${API_BASE_URL}/profile/change-password`,
             { new_password: newPassword },
             {
                 headers: getAuthHeaders(),

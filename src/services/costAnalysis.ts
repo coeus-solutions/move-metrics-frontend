@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { authService } from './auth';
+import { API_BASE_URL } from '../config/api';
 
 type CostRating = 'expensive' | 'moderate' | 'affordable';
 
@@ -77,8 +78,6 @@ export interface ComprehensiveComparison {
   };
   summary: ComparisonSummary;
 }
-
-const API_BASE_URL = 'http://localhost:8000';
 
 export const costAnalysisService = {
   async getCostAnalysis(cityName: string): Promise<CostAnalysis> {

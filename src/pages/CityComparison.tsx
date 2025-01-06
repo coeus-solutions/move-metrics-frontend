@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeftRight, ArrowRight } from 'lucide-react';
 import { CitySelector } from '../components/shared/CitySelector';
 import { NumberInput } from '../components/shared/NumberInput';
@@ -9,12 +9,22 @@ import type { ComprehensiveComparison } from '../services/costAnalysis';
 
 export function CityComparison() {
   const navigate = useNavigate();
-  const [sourceCity, setSourceCity] = useState('');
-  const [targetCity, setTargetCity] = useState('');
+  const [searchParams] = useSearchParams();
+  const [sourceCity, setSourceCity] = useState(searchParams.get('city1') || '');
+  const [targetCity, setTargetCity] = useState(searchParams.get('city2') || '');
   const [familySize, setFamilySize] = useState(1);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ComprehensiveComparison | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Auto-compare if both cities are provided in URL
+    if (sourceCity && targetCity && searchParams.get('preload') === 'true') {
+      handleCompare();
+      // Remove the preload parameter after triggering comparison
+      navigate(`/compare?city1=${sourceCity}&city2=${targetCity}`, { replace: true });
+    }
+  }, [sourceCity, targetCity]);
 
   const handleCompare = async () => {
     if (!sourceCity || !targetCity) return;
@@ -56,6 +66,7 @@ export function CityComparison() {
         <div className="grid grid-cols-1 md:grid-cols-7 gap-6 items-start">
           <div className="md:col-span-3">
             <CitySelector
+              key={`source-${sourceCity}`}
               label="Source City"
               value={sourceCity}
               onChange={(city) => handleCitySelect(city, true)}
@@ -71,6 +82,7 @@ export function CityComparison() {
 
           <div className="md:col-span-3">
             <CitySelector
+              key={`target-${targetCity}`}
               label="Target City"
               value={targetCity}
               onChange={(city) => handleCitySelect(city, false)}

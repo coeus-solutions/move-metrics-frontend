@@ -32,11 +32,23 @@ export function CitySelector({ label, value, onChange, placeholder }: CitySelect
   const dropdownRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
 
   // Fetch cities on mount
   useEffect(() => {
     dispatch(fetchCities());
   }, [dispatch]);
+
+  // Initialize searchTerm if value is provided
+  useEffect(() => {
+    if (value && !initializedRef.current && allCities.length > 0) {
+      const city = allCities.find(c => c.city === value);
+      if (city) {
+        setSearchTerm(`${city.city} (${city.country})`);
+        initializedRef.current = true;
+      }
+    }
+  }, [value, allCities]);
 
   // Update filtered cities when search term or page changes
   useEffect(() => {

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Loader2, Home, ShoppingCart, Train, Lightbulb, Heart, Smile, MoreHorizontal, AlertCircle } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Loader2, Home, ShoppingCart, Train, Lightbulb, Heart, Smile, MoreHorizontal, AlertCircle, ArrowLeft } from 'lucide-react';
 import { costAnalysisService, type CostAnalysis } from '../services/costAnalysis';
 
 export function CityAnalysis() {
   const { cityName } = useParams();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<CostAnalysis | null>(null);
@@ -69,23 +70,32 @@ export function CityAnalysis() {
 
   return (
     <div className="space-y-6">
-      <header className="flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{cityName}</h1>
-          <p className="mt-1 text-sm text-gray-500">{analysis.summary}</p>
-        </div>
-        <div className="text-right">
-          <div className="mb-2">
-            <p className="text-sm text-gray-500">Monthly Total</p>
-            <p className="text-xl font-semibold text-gray-900">
-              ${monthlyTotal.toLocaleString('en-US', { maximumFractionDigits: 2 })}
-            </p>
-          </div>
+      <header>
+        <button
+          onClick={() => navigate('/cities')}
+          className="flex items-center text-indigo-600 hover:text-indigo-700 mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back to Cities
+        </button>
+        <div className="flex justify-between items-start">
           <div>
-            <p className="text-sm text-gray-500">Annual Total</p>
-            <p className="text-2xl font-bold text-indigo-600">
-              ${(analysis.annual_total || monthlyTotal * 12).toLocaleString('en-US', { maximumFractionDigits: 2 })}
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">{cityName}</h1>
+            <p className="mt-1 text-sm text-gray-500">{analysis.summary}</p>
+          </div>
+          <div className="text-right">
+            <div className="mb-2">
+              <p className="text-sm text-gray-500">Monthly Total</p>
+              <p className="text-xl font-semibold text-gray-900">
+                ${monthlyTotal.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Annual Total</p>
+              <p className="text-2xl font-bold text-indigo-600">
+                ${(analysis.annual_total || monthlyTotal * 12).toLocaleString('en-US', { maximumFractionDigits: 2 })}
+              </p>
+            </div>
           </div>
         </div>
       </header>

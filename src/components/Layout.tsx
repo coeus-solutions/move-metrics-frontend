@@ -1,8 +1,5 @@
-import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, BarChart2, LogOut, User, ArrowLeftRight } from 'lucide-react';
+import { Outlet } from 'react-router-dom';
 import { Navigation } from './navigation/Navigation';
-import { UserMenu } from './navigation/UserMenu';
 
 export function Layout() {
   return (

@@ -6,12 +6,13 @@ export function SignupPage() {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
     const [error, setError] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await authService.signup({ email, password });
+            await authService.signup({ email, password, name });
             navigate('/login');
         } catch (err: any) {
             setError(err.response?.data?.detail || 'Failed to sign up');
@@ -28,6 +29,19 @@ export function SignupPage() {
                     </div>
                 )}
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                    <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                            Name
+                        </label>
+                        <input
+                            id="name"
+                            type="text"
+                            required
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                        />
+                    </div>
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                             Email
