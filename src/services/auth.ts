@@ -54,10 +54,7 @@ export const authService = {
         const formData = new URLSearchParams();
         formData.append('username', email);  // Backend expects 'username' field for email
         formData.append('password', password);
-        formData.append('grant_type', '');   // Required by OAuth2 spec
-        formData.append('scope', '');        // Required by OAuth2 spec
-        formData.append('client_id', '');    // Required by OAuth2 spec
-        formData.append('client_secret', ''); // Required by OAuth2 spec
+        formData.append('grant_type', 'password');   // Required by OAuth2 spec
 
         const response = await axios.post(`${API_BASE_URL}/auth/login`, formData, {
             headers: {
